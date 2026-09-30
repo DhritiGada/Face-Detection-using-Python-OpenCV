@@ -1,165 +1,172 @@
 # Live Face Detection & Counting
 
-A real-time computer-vision prototype that lets people open a web page, grant camera access, and see faces detected and counted live in their browser.
+A Python and OpenCV powered web prototype for real-time face detection and counting.
 
-The repository also includes a local Python/OpenCV version for desktop testing.
+Visitors open the deployed app, grant camera access, and see visible faces detected and counted continuously. The browser captures camera frames, sends sampled frames to a Flask backend, and the backend uses OpenCV to return face bounding boxes and the current face count.
 
-## Live browser prototype
-
-The browser version is the easiest way to make the project usable by other people.
-
-Users can:
-
-- Click **Start camera**
-- Grant browser camera permission
-- See live video from their device
-- Detect faces continuously in real time
-- See a bounding box around each detected face
-- See the live **Faces detected** count update automatically
-- Switch cameras when multiple cameras are available
-- Stop the camera at any time
-
-Camera frames are processed client-side and are not intentionally uploaded or stored by this prototype.
-
-### Run locally
-
-Camera access requires HTTPS or localhost.
-
-From the repository folder:
-
-```bash
-python -m http.server 8000
-```
-
-Then open:
+## Architecture
 
 ```
-http://localhost:8000
+Browser camera
+   ↓
+JavaScript frame capture
+   ↓
+POST /detect
+   ↓
+Flask backend
+   ↓
+Python + OpenCV Haar Cascade
+   ↓
+JSON face boxes + count
+   ↓
+Browser canvas overlay
 ```
 
-Do not open `index.html` directly through a `file://` URL because browsers restrict camera access outside a secure context.
+This is a real Python-backed web application. The browser is responsible only for camera access, frame capture, and rendering.
 
-### Deploy for other people
+## Features
 
-Deploy this repository as a static site on Vercel or another HTTPS host.
-
-No Python server is required for the browser version.
-
-Once deployed, a visitor can open the public URL, click **Start camera**, grant permission, and use real-time face detection directly in the browser.
-
-## Browser architecture
-
-The web prototype uses:
-
-- JavaScript
-- Browser MediaDevices / `getUserMedia`
-- MediaPipe Tasks Vision Face Detector
-- VIDEO inference mode
-- HTML Canvas for face bounding boxes
-- Client-side inference
-
-The live count represents the number of faces detected in the **current video frame**.
-
-It is not a unique-person counter and does not track identities over time.
-
-## Local Python/OpenCV version
-
-The original desktop workflow remains available through `face_detection.py`.
-
-### Install
-
-```bash
-pip install -r requirements.txt
-```
-
-### Webcam
-
-```bash
-python face_detection.py
-```
-
-Press `q` to quit.
-
-If the default webcam is unavailable:
-
-```bash
-python face_detection.py --camera 1
-```
-
-### Image
-
-```bash
-python face_detection.py --image path/to/photo.jpg
-```
-
-Save an annotated image:
-
-```bash
-python face_detection.py --image path/to/photo.jpg --output output.jpg
-```
-
-## Face detection vs. face recognition
-
-This project performs **face detection**, not face recognition.
-
-It answers:
-
-> How many faces are visible, and where are they?
-
-It does not identify who a person is or compare a face against known identities.
-
-## Privacy
-
-The browser prototype is designed to process frames locally.
-
-It does not intentionally:
-
-- upload camera frames
-- record video
-- store detected faces
-- identify people
-
-Users must explicitly grant camera permission in their browser.
+- Live webcam access in the browser
+- Python/OpenCV face detection
+- Real-time visible-face count
+- Bounding boxes around each detected face
+- Start and stop camera controls
+- Multi-camera switching
+- Camera permission error handling
+- Health endpoint at `/health`
+- Responsive web interface
+- No identity recognition
 
 ## Project structure
 
 ```
 .
-├── index.html
-├── styles.css
-├── app.js
+├── app.py
 ├── face_detection.py
 ├── requirements.txt
+├── vercel.json
+├── templates/
+│   └── index.html
+├── static/
+│   ├── app.js
+│   └── styles.css
 └── README.md
 ```
 
-## Common camera errors
+## Run locally
 
-### Camera permission denied
+Create and activate a virtual environment if desired, then install dependencies:
 
-Allow camera permission for the site in the browser and reload the page.
+```bash
+pip install -r requirements.txt
+```
 
-### No camera found
+Start Flask:
 
-Make sure the device has an available webcam.
+```bash
+python app.py
+```
 
-### Camera already in use
+Open:
 
-Close another application that may have exclusive access to the webcam and try again.
+```
+http://localhost:5000
+```
 
-### Camera does not work from the deployed page
+Click **Start camera** and allow camera permission.
 
-The deployment must use HTTPS. Browsers generally allow camera access only from secure origins or `localhost`.
+## Deploy to Vercel
+
+Import this GitHub repository into Vercel and select the Python application/runtime option.
+
+The Flask app is exposed through `app.py`, and dependencies are defined in `requirements.txt`.
+
+No external database or environment variables are required for the current prototype.
+
+After deployment, the app must be accessed over HTTPS for browser camera permissions to work.
+
+## Detection API
+
+### `POST /detect`
+
+Accepts a multipart image upload:
+
+```
+frame=<jpeg image>
+```
+
+Returns:
+
+```json
+{
+  "count": 2,
+  "faces": [
+    {
+      "x": 120,
+      "y": 90,
+      "width": 180,
+      "height": 180
+    }
+  ],
+  "frameWidth": 1280,
+  "frameHeight": 720
+}
+```
+
+### `GET /health`
+
+Returns the backend health state and detector type.
+
+## Real-time behavior
+
+The browser samples the live camera roughly every 250 ms.
+
+For each sample:
+
+1. The video frame is converted to JPEG.
+2. The frame is posted to the Flask `/detect` endpoint.
+3. OpenCV converts it to grayscale.
+4. Histogram equalization is applied.
+5. Haar Cascade face detection runs.
+6. Bounding boxes are returned as JSON.
+7. The browser draws the boxes and updates the face count.
+
+The count represents the number of faces detected in the **current analyzed frame**.
+
+It is not a unique-person counter and does not track identities over time.
+
+## Privacy
+
+This prototype performs face detection, not face recognition.
+
+It does not intentionally:
+
+- identify people
+- maintain biometric profiles
+- store uploaded camera frames
+- record video
+- track a person across sessions
+
+Frames are sent to the application backend only for detection and are processed in memory.
+
+## Local OpenCV script
+
+The repository still contains `face_detection.py` for local desktop testing.
+
+Run webcam detection locally:
+
+```bash
+python face_detection.py
+```
+
+Run image detection:
+
+```bash
+python face_detection.py --image path/to/photo.jpg
+```
 
 ## Limitations
 
-Detection quality can vary with:
+Detection quality can vary with lighting, face angle, distance, occlusion, and camera quality.
 
-- lighting
-- camera quality
-- face size
-- head angle
-- partial occlusion
-- distance from the camera
-
-This is a prototype and is not intended for identity recognition, surveillance, or production biometric use.
+The Haar Cascade detector is lightweight and useful for a prototype, but a future version could use a more robust modern face detector while preserving the same Flask API contract.
