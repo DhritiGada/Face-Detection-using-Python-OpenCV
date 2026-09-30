@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Python and OpenCV powered real-time face detection and counting."
+  />
+  <title>Live Face Counter</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">PYTHON + OPENCV</p>
+        <h1>Live Face Counter</h1>
+        <p class="subtitle">
+          Use your camera to detect and count visible faces in real time.
+          Detection runs through a Python/OpenCV backend.
+        </p>
+      </div>
+      <div class="status">
+        <span id="statusDot" class="dot"></span>
+        <div>
+          <small>STATUS</small>
+          <strong id="statusText">Ready</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="sidebar">
+        <article class="card metric">
+          <span>Faces detected</span>
+          <strong id="faceCount">0</strong>
+          <small>Current analyzed frame</small>
+        </article>
+
+        <article class="card">
+          <h2>Camera controls</h2>
+          <p>Start your camera and allow browser access when prompted.</p>
+          <button id="startButton" class="primary">Start camera</button>
+          <button id="stopButton" class="secondary" disabled>Stop camera</button>
+
+          <label for="cameraSelect">Camera</label>
+          <select id="cameraSelect" disabled>
+            <option>Default camera</option>
+          </select>
+        </article>
+
+        <article class="card">
+          <h2>Detection pipeline</h2>
+          <ol>
+            <li>The browser opens your camera.</li>
+            <li>A frame is sampled several times per second.</li>
+            <li>The frame is sent to the Flask backend.</li>
+            <li>Python/OpenCV detects faces.</li>
+            <li>The browser draws boxes and updates the count.</li>
+          </ol>
+        </article>
+
+        <article class="privacy">
+          <strong>Prototype privacy</strong>
+          <p>
+            Frames are sent to the server only for detection. This prototype
+            does not intentionally save uploaded frames or identify people.
+          </p>
+        </article>
+      </aside>
+
+      <section class="camera-card">
+        <div class="camera-header">
+          <div>
+            <p class="eyebrow">LIVE CAMERA</p>
+            <h2>Detection feed</h2>
+          </div>
+          <span id="liveBadge" class="badge">OFFLINE</span>
+        </div>
+
+        <div class="stage">
+          <div id="emptyState" class="empty">
+            <div class="camera-icon">◎</div>
+            <h3>Camera is off</h3>
+            <p>Click <strong>Start camera</strong> to begin.</p>
+          </div>
+
+          <div id="videoWrap" class="video-wrap" hidden>
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
+          </div>
+        </div>
+
+        <div id="message" class="message">
+          No video is being recorded.
+        </div>
+      </section>
+    </section>
+
+    <footer>
+      Face detection only. This app counts visible faces but does not identify who they are.
+    </footer>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
