@@ -1,79 +1,165 @@
-# Face Detection using Python and OpenCV
+# Live Face Detection & Counting
 
-A simple computer-vision project that detects human faces in either a still image or a live webcam feed using OpenCV's bundled Haar Cascade classifier.
+A real-time computer-vision prototype that lets people open a web page, grant camera access, and see faces detected and counted live in their browser.
 
-## Features
+The repository also includes a local Python/OpenCV version for desktop testing.
 
-- Detect faces in a local image
-- Detect faces in real time from a webcam
-- Draw bounding boxes around detected faces
-- Display the number of faces detected
-- Print face coordinates for image inputs
-- Optionally save an annotated output image
-- No external model download is required
+## Live browser prototype
 
-## Requirements
+The browser version is the easiest way to make the project usable by other people.
 
-- Python 3.9+
-- OpenCV
+Users can:
 
-Install dependencies:
+- Click **Start camera**
+- Grant browser camera permission
+- See live video from their device
+- Detect faces continuously in real time
+- See a bounding box around each detected face
+- See the live **Faces detected** count update automatically
+- Switch cameras when multiple cameras are available
+- Stop the camera at any time
+
+Camera frames are processed client-side and are not intentionally uploaded or stored by this prototype.
+
+### Run locally
+
+Camera access requires HTTPS or localhost.
+
+From the repository folder:
+
+```bash
+python -m http.server 8000
+```
+
+Then open:
+
+```
+http://localhost:8000
+```
+
+Do not open `index.html` directly through a `file://` URL because browsers restrict camera access outside a secure context.
+
+### Deploy for other people
+
+Deploy this repository as a static site on Vercel or another HTTPS host.
+
+No Python server is required for the browser version.
+
+Once deployed, a visitor can open the public URL, click **Start camera**, grant permission, and use real-time face detection directly in the browser.
+
+## Browser architecture
+
+The web prototype uses:
+
+- JavaScript
+- Browser MediaDevices / `getUserMedia`
+- MediaPipe Tasks Vision Face Detector
+- VIDEO inference mode
+- HTML Canvas for face bounding boxes
+- Client-side inference
+
+The live count represents the number of faces detected in the **current video frame**.
+
+It is not a unique-person counter and does not track identities over time.
+
+## Local Python/OpenCV version
+
+The original desktop workflow remains available through `face_detection.py`.
+
+### Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run with a webcam
+### Webcam
 
 ```bash
 python face_detection.py
 ```
 
-Press `q` to close the webcam window.
+Press `q` to quit.
 
-If your default camera is not available, try another camera index:
+If the default webcam is unavailable:
 
 ```bash
 python face_detection.py --camera 1
 ```
 
-Your operating system may ask you to grant camera permission to Python or your terminal.
-
-## Run with an image
+### Image
 
 ```bash
 python face_detection.py --image path/to/photo.jpg
 ```
 
-To save the detected result:
+Save an annotated image:
 
 ```bash
 python face_detection.py --image path/to/photo.jpg --output output.jpg
 ```
 
-The script prints the number of detected faces and the pixel coordinates of each bounding box.
+## Face detection vs. face recognition
 
-## How it works
+This project performs **face detection**, not face recognition.
 
-1. OpenCV loads its built-in frontal-face Haar Cascade.
-2. Each input frame is converted to grayscale.
-3. Histogram equalization improves contrast for detection.
-4. `detectMultiScale` searches the image at multiple scales for likely faces.
-5. OpenCV draws a bounding box around every detected face.
+It answers:
 
-This project performs **face detection**, not face recognition. It locates faces in an image but does not identify who a person is.
+> How many faces are visible, and where are they?
+
+It does not identify who a person is or compare a face against known identities.
+
+## Privacy
+
+The browser prototype is designed to process frames locally.
+
+It does not intentionally:
+
+- upload camera frames
+- record video
+- store detected faces
+- identify people
+
+Users must explicitly grant camera permission in their browser.
 
 ## Project structure
 
 ```
 .
+├── index.html
+├── styles.css
+├── app.js
 ├── face_detection.py
 ├── requirements.txt
 └── README.md
 ```
 
-## Notes
+## Common camera errors
 
-Haar Cascades are lightweight and convenient for a learning project, but modern deep-learning face detectors are usually more robust to difficult lighting, pose, occlusion, and very small faces.
+### Camera permission denied
 
-This version intentionally uses OpenCV's bundled classifier so the repository remains easy to install and run without requiring `dlib`, `face_recognition`, a notebook environment, or a separate model file.
+Allow camera permission for the site in the browser and reload the page.
+
+### No camera found
+
+Make sure the device has an available webcam.
+
+### Camera already in use
+
+Close another application that may have exclusive access to the webcam and try again.
+
+### Camera does not work from the deployed page
+
+The deployment must use HTTPS. Browsers generally allow camera access only from secure origins or `localhost`.
+
+## Limitations
+
+Detection quality can vary with:
+
+- lighting
+- camera quality
+- face size
+- head angle
+- partial occlusion
+- distance from the camera
+
+This is a prototype and is not intended for identity recognition, surveillance, or production biometric use.
